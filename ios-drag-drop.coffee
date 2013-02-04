@@ -9,8 +9,6 @@ INFO = 1
 ERROR = 0
 LOG_LEVEL = INFO
 
-INLINE_TAGS = ['A', 'ABBR', 'ACRONYM', 'B', 'BDO', 'BIG', 'CITE', 'CODE', 'DFN', 'EM', 'I', 'KBD', 'LABEL', 'Q', 'SAMP', 'SMALL', 'SPAN', 'STRONG', 'SUB',
- 'SUP', 'TT', 'VAR']
 doc = document
 # default to a noop, remove it for debugging
 noop = ->
@@ -53,7 +51,8 @@ class DragDrop
 
     @el = el
 
-    if INLINE_TAGS.some((e) -> e is el.tagName) and el.style.display is ''
+    console.log getComputedStyle(el, '').display
+    if getComputedStyle(el, '').display is 'inline' and el.style.display is ''
       el.style.display = 'inline-block'
       @inline = true
 
