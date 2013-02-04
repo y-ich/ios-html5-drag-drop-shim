@@ -110,8 +110,10 @@ class DragDrop
         @el.style["-webkit-transition"] = "all 0.2s"
         @el.style["-webkit-transform"] = "translate(0,0)"
 
+    event.target.style.display = 'none'
     target = doc.elementFromPoint(event.changedTouches[0].clientX,event.changedTouches[0].clientY)
-    console.log target
+    event.target.style.display = ''
+
     if target
       dropEvt = doc.createEvent "Event"
       dropEvt.initEvent "drop", true, true
