@@ -7,7 +7,7 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
 
 
 (function() {
-  var DEBUG, DragDrop, ERROR, INFO, LOG_LEVEL, VERBOSE, average, div, doc, dragDiv, dragstart, evts, getEls, handler, log, needsPatch, noop, onEvt, once, parents,
+  var DEBUG, DragDrop, ERROR, INFO, LOG_LEVEL, VERBOSE, average, div, dragDiv, dragstart, evts, getEls, handler, log, needsPatch, onEvt, once, parents,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   VERBOSE = 3;
@@ -18,13 +18,9 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
 
   ERROR = 0;
 
-  LOG_LEVEL = INFO;
+  LOG_LEVEL = VERBOSE;
 
-  doc = document;
-
-  noop = function() {};
-
-  log = noop || function(msg, level) {
+  log = typeof noop !== "undefined" && noop !== null ? noop : function(msg, level) {
     if (level == null) {
       level = ERROR;
     }
@@ -64,57 +60,53 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
     function DragDrop(event, el) {
       var cancel, cleanup, end, evt, match, move, transform, x, y, _ref,
         _this = this;
-      if (el == null) {
-        el = event.target;
-      }
+      this.el = el != null ? el : event.target;
       this.dragend = __bind(this.dragend, this);
 
       this.move = __bind(this.move, this);
 
       event.preventDefault();
-      log("dragstart");
+      log('dragstart');
       this.dragData = {};
-      evt = doc.createEvent("Event");
-      evt.initEvent("dragstart", true, true);
+      evt = document.createEvent('Event');
+      evt.initEvent('dragstart', true, true);
       evt.dataTransfer = {
         setData: function(type, val) {
           return _this.dragData[type] = val;
         },
-        dropEffect: "move"
+        dropEffect: 'move'
       };
-      el.dispatchEvent(evt);
+      this.el.dispatchEvent(evt);
       cleanup = function() {
-        log("cleanup");
+        log('cleanup');
         _this.touchPositions = {};
         return [move, end, cancel].forEach(function(handler) {
           return handler.off();
         });
       };
-      this.el = el;
-      console.log(getComputedStyle(el, '').display);
-      if (getComputedStyle(el, '').display === 'inline' && el.style.display === '') {
-        el.style.display = 'inline-block';
+      if (getComputedStyle(el, '').display === 'inline' && this.el.style.display === '') {
+        this.el.style.display = 'inline-block';
         this.inline = true;
       }
       this.touchPositions = {};
-      transform = this.el.style["-webkit-transform"];
+      transform = this.el.style['-webkit-transform'];
       _ref = (match = /translate\(\s*(\d+)[^,]*,\D*(\d+)/.exec(transform)) ? [parseInt(match[1]), parseInt(match[2])] : [0, 0], x = _ref[0], y = _ref[1];
       this.elTranslation = {
         x: x,
         y: y
       };
-      move = onEvt(doc, "touchmove", this.move);
-      end = onEvt(doc, "touchend", function(evt) {
+      move = onEvt(document, 'touchmove', this.move);
+      end = onEvt(document, 'touchend', function(evt) {
         _this.dragend(evt, event.target);
         return cleanup();
       });
-      cancel = onEvt(doc, "touchcancel", cleanup);
+      cancel = onEvt(document, 'touchcancel', cleanup);
     }
 
     DragDrop.prototype.move = function(event) {
       var deltas,
         _this = this;
-      log("dragmove", VERBOSE);
+      log('dragmove', VERBOSE);
       deltas = [].slice.call(event.changedTouches).reduce(function(deltas, touch, index) {
         var position;
         position = _this.touchPositions[index];
@@ -139,25 +131,30 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
     DragDrop.prototype.dragend = function(event) {
       var doSnapBack, dragendEvt, dropEvt, next, parent, replacementFn, snapBack, target,
         _this = this;
-      log("dragend");
+      log('dragend');
       doSnapBack = function() {
-        once(_this.el, "webkitTransitionEnd", function() {
-          _this.el.style["-webkit-transition"] = "none";
+        once(_this.el, 'webkitTransitionEnd', function() {
+          _this.el.style['-webkit-transition'] = 'none';
           if (_this.inline) {
-            return _this.el.style["display"] = "";
+            return _this.el.style['display'] = '';
           }
         });
         return setTimeout(function() {
-          _this.el.style["-webkit-transition"] = "all 0.2s";
-          return _this.el.style["-webkit-transform"] = "translate(0,0)";
+          _this.el.style['-webkit-transition'] = 'all 0.2s';
+          return _this.el.style['-webkit-transform'] = 'translate(0,0)';
         });
       };
       event.target.style.display = 'none';
-      target = doc.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
+      log(event.target, INFO);
+      log(this.el, INFO);
+      while ((target = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY)) === event.target) {
+        log('visible', INFO);
+      }
+      log(target, INFO);
       event.target.style.display = '';
       if (target) {
-        dropEvt = doc.createEvent("Event");
-        dropEvt.initEvent("drop", true, true);
+        dropEvt = document.createEvent('Event');
+        dropEvt.initEvent('drop', true, true);
         dropEvt.dataTransfer = {
           getData: function(type) {
             return _this.dragData[type];
@@ -166,9 +163,9 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
         snapBack = true;
         dropEvt.preventDefault = function() {
           snapBack = false;
-          return _this.el.style["-webkit-transform"] = "translate(0,0)";
+          return _this.el.style['-webkit-transform'] = 'translate(0,0)';
         };
-        once(doc, "drop", function() {
+        once(document, 'drop', function() {
           if (snapBack) {
             return doSnapBack();
           }
@@ -183,10 +180,10 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
         replacementFn();
         target.dispatchEvent(dropEvt);
       } else {
-        once(doc, "dragend", doSnapBack);
+        once(document, 'dragend', doSnapBack);
       }
-      dragendEvt = doc.createEvent("Event");
-      dragendEvt.initEvent("dragend", true, true);
+      dragendEvt = document.createEvent('Event');
+      dragendEvt.initEvent('dragend', true, true);
       return this.el.dispatchEvent(dragendEvt);
     };
 
@@ -197,12 +194,12 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
   getEls = function(el, selector) {
     var _ref;
     if (!selector) {
-      _ref = [doc, el], el = _ref[0], selector = _ref[1];
+      _ref = [document, el], el = _ref[0], selector = _ref[1];
     }
     return [].slice.call(el.querySelectorAll(selector));
   };
 
-  div = doc.createElement('div');
+  div = document.createElement('div');
 
   dragDiv = 'draggable' in div;
 
@@ -210,7 +207,7 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
 
   needsPatch = !(dragDiv || evts) || /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  log("" + (needsPatch ? "" : "not ") + "patching html5 drag drop");
+  log("" + (needsPatch ? '' : 'not ') + "patching html5 drag drop");
 
   if (!needsPatch) {
     return;
@@ -224,19 +221,18 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
   parents = function(el) {
     var parent, _results;
     _results = [];
-    while ((parent = el.parentNode) && parent !== doc.body) {
-      el = parent;
-      _results.push(parent);
+    while ((parent = el.parentNode) && parent !== document.body) {
+      _results.push(el = parent);
     }
     return _results;
   };
 
-  doc.addEventListener("touchstart", handler = function(evt) {
+  document.addEventListener('touchstart', handler = function(evt) {
     var el, _i, _len, _ref;
     _ref = [evt.target].concat(parents(evt.target));
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       el = _ref[_i];
-      if (el !== document && el.hasAttribute("draggable")) {
+      if (el !== document && el.hasAttribute('draggable')) {
         evt.preventDefault();
         return dragstart(evt, el);
       }
