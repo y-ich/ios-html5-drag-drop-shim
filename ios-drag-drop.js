@@ -7,7 +7,7 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
 
 
 (function() {
-  var DEBUG, DragDrop, ERROR, INFO, LOG_LEVEL, VERBOSE, average, div, dragDiv, dragstart, evts, getEls, handler, log, needsPatch, onEvt, once, parents,
+  var DEBUG, DragDrop, ERROR, INFO, LOG_LEVEL, VERBOSE, average, div, dragDiv, dragstart, evts, getEls, handler, log, needsPatch, noop, onEvt, once, parents,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   VERBOSE = 3;
@@ -18,9 +18,11 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
 
   ERROR = 0;
 
-  LOG_LEVEL = VERBOSE;
+  LOG_LEVEL = INFO;
 
-  log = typeof noop !== "undefined" && noop !== null ? noop : function(msg, level) {
+  noop = function() {};
+
+  log = noop != null ? noop : function(msg, level) {
     if (level == null) {
       level = ERROR;
     }

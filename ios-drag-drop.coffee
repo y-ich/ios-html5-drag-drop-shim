@@ -7,10 +7,10 @@ VERBOSE = 3
 DEBUG = 2
 INFO = 1
 ERROR = 0
-LOG_LEVEL = VERBOSE
+LOG_LEVEL = INFO
 
 # default to a noop, remove it for debugging
-# noop = ->
+noop = ->
 log = noop ? (msg,level = ERROR) -> console.log msg if level <= LOG_LEVEL
 
 # adds event handler and returns an object for removing handler.
