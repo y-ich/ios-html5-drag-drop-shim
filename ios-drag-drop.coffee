@@ -33,9 +33,9 @@ average = (arr) ->
 
 class DragDrop
     constructor: (event, @el = event.target) ->
+        log 'dragstart', VERBOSE
         event.preventDefault()
 
-        log 'dragstart'
         @dragData = {}
 
         evt = document.createEvent 'Event'
@@ -45,11 +45,6 @@ class DragDrop
             dropEffect: 'move'
 
         @el.dispatchEvent evt
-
-        cleanup = =>
-            log 'cleanup'
-            @touchPositions = {}
-            [ move, end, cancel ].forEach (handler) -> handler.off()
 
         if getComputedStyle(el, '').display is 'inline' and @el.style.display is ''
             @el.style.display = 'inline-block'
@@ -67,6 +62,10 @@ class DragDrop
             x: x
             y: y
 
+        cleanup = =>
+            log 'cleanup'
+            @touchPositions = {}
+            [ move, end, cancel ].forEach (handler) -> handler.off()
         move = onEvt document, 'touchmove', @move
         end = onEvt document, 'touchend', (evt) =>
             @dragend evt, event.target
@@ -109,27 +108,23 @@ class DragDrop
                 @el.style['-webkit-transition'] = 'all 0.2s'
                 @el.style['-webkit-transform'] = 'translate(0,0)'
 
-        event.target.style.display = 'none'
-        log(event.target, INFO)
-        log(@el, INFO)
-        while (target = document.elementFromPoint(event.changedTouches[0].clientX,event.changedTouches[0].clientY)) is event.target
-            log('visible', INFO)
-        log(target, INFO)
-        event.target.style.display = ''
+        
+        @el.style.display = 'none' # prevents elementFromPoint to pick up dragged element.
+        target = document.elementFromPoint event.changedTouches[0].clientX, event.changedTouches[0].clientY
+        log target, INFO
+        @el.style.display = ''
 
         if target
             dropEvt = document.createEvent 'Event'
             dropEvt.initEvent 'drop', true, true
             dropEvt.dataTransfer =
-                getData: (type) =>
-                    @dragData[type]
+                getData: (type) => @dragData[type]
             snapBack = true
             dropEvt.preventDefault = =>
                 # https://www.w3.org/Bugs/Public/show_bug.cgi?id=14638 - if we don't cancel it, we're snapping back
                 snapBack = false
                 @el.style['-webkit-transform'] = 'translate(0,0)'
-            once document, 'drop', ->
-                doSnapBack() if snapBack
+            once document, 'drop', -> doSnapBack() if snapBack
 
             # dispatch event on drop target
             parent = @el.parentNode
@@ -149,16 +144,15 @@ class DragDrop
         @el.dispatchEvent dragendEvt
 
 getEls = (el, selector) ->
-    unless selector
-        [el, selector] = [document, el]
-    [].slice.call (el).querySelectorAll(selector)
+    [el, selector] = [document, el] unless selector
+    [].slice.call(el).querySelectorAll selector
 
 # drag&drop support detection
-div = document.createElement('div')
+div = document.createElement 'div'
 dragDiv = `'draggable' in div`
 evts = `'ondragstart' in div && 'ondrop' in div`
-needsPatch = !(dragDiv || evts) || /iPad|iPhone|iPod/.test(navigator.userAgent)
-log("#{if needsPatch then '' else 'not '}patching html5 drag drop")
+needsPatch = not (dragDiv or evts) or /iPad|iPhone|iPod/.test navigator.userAgent
+log "#{if needsPatch then '' else 'not '}patching html5 drag drop"
 return unless needsPatch
 
 dragstart = (evt, el) ->

@@ -65,8 +65,8 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
 
       this.move = __bind(this.move, this);
 
+      log('dragstart', VERBOSE);
       event.preventDefault();
-      log('dragstart');
       this.dragData = {};
       evt = document.createEvent('Event');
       evt.initEvent('dragstart', true, true);
@@ -77,13 +77,6 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
         dropEffect: 'move'
       };
       this.el.dispatchEvent(evt);
-      cleanup = function() {
-        log('cleanup');
-        _this.touchPositions = {};
-        return [move, end, cancel].forEach(function(handler) {
-          return handler.off();
-        });
-      };
       if (getComputedStyle(el, '').display === 'inline' && this.el.style.display === '') {
         this.el.style.display = 'inline-block';
         this.inline = true;
@@ -94,6 +87,13 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
       this.elTranslation = {
         x: x,
         y: y
+      };
+      cleanup = function() {
+        log('cleanup');
+        _this.touchPositions = {};
+        return [move, end, cancel].forEach(function(handler) {
+          return handler.off();
+        });
       };
       move = onEvt(document, 'touchmove', this.move);
       end = onEvt(document, 'touchend', function(evt) {
@@ -144,14 +144,10 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
           return _this.el.style['-webkit-transform'] = 'translate(0,0)';
         });
       };
-      event.target.style.display = 'none';
-      log(event.target, INFO);
-      log(this.el, INFO);
-      while ((target = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY)) === event.target) {
-        log('visible', INFO);
-      }
+      this.el.style.display = 'none';
+      target = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
       log(target, INFO);
-      event.target.style.display = '';
+      this.el.style.display = '';
       if (target) {
         dropEvt = document.createEvent('Event');
         dropEvt.initEvent('drop', true, true);
@@ -196,7 +192,7 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
     if (!selector) {
       _ref = [document, el], el = _ref[0], selector = _ref[1];
     }
-    return [].slice.call(el.querySelectorAll(selector));
+    return [].slice.call(el).querySelectorAll(selector);
   };
 
   div = document.createElement('div');
