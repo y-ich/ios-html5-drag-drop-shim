@@ -103,6 +103,9 @@ class DragDrop
             once @el, 'webkitTransitionEnd', =>
                 @el.style['-webkit-transition'] = 'none'
                 @el.style['display'] = '' if @inline
+                dragendEvt = document.createEvent 'Event'
+                dragendEvt.initEvent 'dragend', true, true
+                @el.dispatchEvent dragendEvt
 
             setTimeout =>
                 @el.style['-webkit-transition'] = 'all 0.2s'
@@ -138,11 +141,7 @@ class DragDrop
 
             target.dispatchEvent(dropEvt)
         else
-            once document, 'dragend', doSnapBack
-
-        dragendEvt = document.createEvent 'Event'
-        dragendEvt.initEvent 'dragend', true, true
-        @el.dispatchEvent dragendEvt
+            doSnapBack()
 
 getEls = (el, selector) ->
     [el, selector] = [document, el] unless selector

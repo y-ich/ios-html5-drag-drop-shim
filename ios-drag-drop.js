@@ -131,15 +131,19 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
     };
 
     DragDrop.prototype.dragend = function(event) {
-      var doSnapBack, dragendEvt, dropEvt, next, parent, replacementFn, snapBack, target,
+      var doSnapBack, dropEvt, next, parent, replacementFn, snapBack, target,
         _this = this;
       log('dragend');
       doSnapBack = function() {
         once(_this.el, 'webkitTransitionEnd', function() {
+          var dragendEvt;
           _this.el.style['-webkit-transition'] = 'none';
           if (_this.inline) {
-            return _this.el.style['display'] = '';
+            _this.el.style['display'] = '';
           }
+          dragendEvt = document.createEvent('Event');
+          dragendEvt.initEvent('dragend', true, true);
+          return _this.el.dispatchEvent(dragendEvt);
         });
         return setTimeout(function() {
           _this.el.style['-webkit-transition'] = 'all 0.2s';
@@ -177,13 +181,10 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
         };
         parent.removeChild(this.el);
         replacementFn();
-        target.dispatchEvent(dropEvt);
+        return target.dispatchEvent(dropEvt);
       } else {
-        once(document, 'dragend', doSnapBack);
+        return doSnapBack();
       }
-      dragendEvt = document.createEvent('Event');
-      dragendEvt.initEvent('dragend', true, true);
-      return this.el.dispatchEvent(dragendEvt);
     };
 
     return DragDrop;
