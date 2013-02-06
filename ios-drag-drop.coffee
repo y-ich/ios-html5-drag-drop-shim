@@ -109,10 +109,11 @@ class DragDrop
                 @el.style['-webkit-transform'] = 'translate(0,0)'
 
         
-        @el.style.display = 'none' # prevents elementFromPoint to pick up dragged element.
+        @el.style.visibility = 'hidden' # prevents elementFromPoint to pick up dragged element.
         target = document.elementFromPoint event.changedTouches[0].clientX, event.changedTouches[0].clientY
+        log "#{event.changedTouches[0].clientX}, #{event.changedTouches[0].clientY}", INFO
         log target, INFO
-        @el.style.display = ''
+        @el.style.visibility = ''
 
         if target
             dropEvt = document.createEvent 'Event'

@@ -146,10 +146,11 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
           return _this.el.style['-webkit-transform'] = 'translate(0,0)';
         });
       };
-      this.el.style.display = 'none';
+      this.el.style.visibility = 'hidden';
       target = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
+      log("" + event.changedTouches[0].clientX + ", " + event.changedTouches[0].clientY, INFO);
       log(target, INFO);
-      this.el.style.display = '';
+      this.el.style.visibility = '';
       if (target) {
         dropEvt = document.createEvent('Event');
         dropEvt.initEvent('drop', true, true);
