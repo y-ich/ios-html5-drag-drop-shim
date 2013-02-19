@@ -13,23 +13,41 @@ LOG_LEVEL = INFO
 noop = ->
 log = noop ? (msg,level = ERROR) -> console.log msg if level <= LOG_LEVEL
 
+# drag&drop support detection
+div = document.createElement 'div'
+dragDiv = `'draggable' in div`
+evts = `'ondragstart' in div && 'ondrop' in div`
+needsPatch = not (dragDiv or evts) or /iPad|iPhone|iPod/.test navigator.userAgent
+log "#{if needsPatch then '' else 'not '}patching html5 drag drop"
+return unless needsPatch
+
+
 # adds event handler and returns an object for removing handler.
 onEvt = (el, event, handler) ->
-      el.addEventListener event, handler
-      off: ->
-          el.removeEventListener event, handler
+    el.addEventListener event, handler
+    off: ->
+        el.removeEventListener event, handler
 
 # adds event handler that will be removed when invoking once.
 once = (el, event, handler) ->
-      el.addEventListener event, listener = (evt) ->
-          handler evt
-          el.removeEventListener event, listener
+    el.addEventListener event, listener = (evt) ->
+        handler evt
+        el.removeEventListener event, listener
 
 # returns average of arr
 average = (arr) ->
-      return 0 if arr.length == 0
-      arr.reduce(((s,v) -> v + s), 0) / arr.length
+    return 0 if arr.length == 0
+    arr.reduce(((s,v) -> v + s), 0) / arr.length
 
+# Mozilla/5.0 (iPhone; CPU iPhone OS 6_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B141 Safari/8536.25
+# Mozilla/5.0 (iPad; CPU OS 6_1 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B141 Safari/8536.25
+coordinateSystemForElementFromPoint = (->
+    if match = navigator.userAgent.match /(?:iPhone|iPad);.*OS ([0-9]+)_([0-9]+)/
+        if parseInt match[1] < 5 then 'page' else 'client'
+    else
+        'page'
+)()
+log coordinateSystemForElementFromPoint, INFO
 
 class DragDrop
     constructor: (event, @el = event.target) ->
@@ -75,6 +93,7 @@ class DragDrop
       # dragend - need to implement it
       move: (event) =>
         log 'dragmove', VERBOSE
+        console.log event
         deltas = [].slice.call(event.changedTouches).reduce (deltas, touch, index) =>
                 position = @touchPositions[index]
                 if position
@@ -113,8 +132,7 @@ class DragDrop
 
         
         @el.style.visibility = 'hidden' # prevents elementFromPoint to pick up dragged element.
-        target = document.elementFromPoint event.changedTouches[0].clientX, event.changedTouches[0].clientY
-        log "#{event.changedTouches[0].clientX}, #{event.changedTouches[0].clientY}", INFO
+        target = document.elementFromPoint event.changedTouches[0]["#{coordinateSystemForElementFromPoint}X"], event.changedTouches[0]["#{coordinateSystemForElementFromPoint}Y"]
         log target, INFO
         @el.style.visibility = ''
 
@@ -146,14 +164,6 @@ class DragDrop
 getEls = (el, selector) ->
     [el, selector] = [document, el] unless selector
     [].slice.call(el).querySelectorAll selector
-
-# drag&drop support detection
-div = document.createElement 'div'
-dragDiv = `'draggable' in div`
-evts = `'ondragstart' in div && 'ondrop' in div`
-needsPatch = not (dragDiv or evts) or /iPad|iPhone|iPod/.test navigator.userAgent
-log "#{if needsPatch then '' else 'not '}patching html5 drag drop"
-return unless needsPatch
 
 dragstart = (evt, el) ->
     evt.preventDefault()

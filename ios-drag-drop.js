@@ -7,7 +7,7 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
 
 
 (function() {
-  var DEBUG, DragDrop, ERROR, INFO, LOG_LEVEL, VERBOSE, average, div, dragDiv, dragstart, evts, getEls, handler, log, needsPatch, noop, onEvt, once, parents,
+  var DEBUG, DragDrop, ERROR, INFO, LOG_LEVEL, VERBOSE, average, coordinateSystemForElementFromPoint, div, dragDiv, dragstart, evts, getEls, handler, log, needsPatch, noop, onEvt, once, parents,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   VERBOSE = 3;
@@ -30,6 +30,20 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
       return console.log(msg);
     }
   };
+
+  div = document.createElement('div');
+
+  dragDiv = 'draggable' in div;
+
+  evts = 'ondragstart' in div && 'ondrop' in div;
+
+  needsPatch = !(dragDiv || evts) || /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  log("" + (needsPatch ? '' : 'not ') + "patching html5 drag drop");
+
+  if (!needsPatch) {
+    return;
+  }
 
   onEvt = function(el, event, handler) {
     el.addEventListener(event, handler);
@@ -56,6 +70,21 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
       return v + s;
     }), 0) / arr.length;
   };
+
+  coordinateSystemForElementFromPoint = (function() {
+    var match;
+    if (match = navigator.userAgent.match(/(?:iPhone|iPad);.*OS ([0-9]+)_([0-9]+)/)) {
+      if (parseInt(match[1] < 5)) {
+        return 'page';
+      } else {
+        return 'client';
+      }
+    } else {
+      return 'page';
+    }
+  })();
+
+  log(coordinateSystemForElementFromPoint, INFO);
 
   DragDrop = (function() {
 
@@ -109,6 +138,7 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
       var deltas,
         _this = this;
       log('dragmove', VERBOSE);
+      console.log(event);
       deltas = [].slice.call(event.changedTouches).reduce(function(deltas, touch, index) {
         var position;
         position = _this.touchPositions[index];
@@ -151,8 +181,7 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
         });
       };
       this.el.style.visibility = 'hidden';
-      target = document.elementFromPoint(event.changedTouches[0].clientX, event.changedTouches[0].clientY);
-      log("" + event.changedTouches[0].clientX + ", " + event.changedTouches[0].clientY, INFO);
+      target = document.elementFromPoint(event.changedTouches[0]["" + coordinateSystemForElementFromPoint + "X"], event.changedTouches[0]["" + coordinateSystemForElementFromPoint + "Y"]);
       log(target, INFO);
       this.el.style.visibility = '';
       if (target) {
@@ -198,20 +227,6 @@ CoffeeScript porting of https://github.com/timruffles/ios-html5-drag-drop-shim
     }
     return [].slice.call(el).querySelectorAll(selector);
   };
-
-  div = document.createElement('div');
-
-  dragDiv = 'draggable' in div;
-
-  evts = 'ondragstart' in div && 'ondrop' in div;
-
-  needsPatch = !(dragDiv || evts) || /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-  log("" + (needsPatch ? '' : 'not ') + "patching html5 drag drop");
-
-  if (!needsPatch) {
-    return;
-  }
 
   dragstart = function(evt, el) {
     evt.preventDefault();
